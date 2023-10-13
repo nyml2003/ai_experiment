@@ -1,70 +1,75 @@
-from typing import List
 from collections import Counter
 from math import log2
 
-
-def retain_column_with_value(data: List[List[float]], column: int, value: float):
-    return [item for item in data if item[column] == value]
+import pandas as pd
 
 
-def retain_column_less_value(data: List[List[float]], column: int, value: float):
-    return [item for item in data if item[column] < value]
-
-
-def retain_column_greater_value(data: List[List[float]], column: int, value: float):
-    return [item for item in data if item[column] > value]
-
-
-def calculate_entropy(data: List[List[float]]) -> float:
-    data_num = len(data)
-    target_count = Counter([item[-1] for item in data])
-    return -sum([(target_count[key] / data_num) * log2(target_count[key] / data_num) for key in target_count])
-
-
-def gain_continuous(data: List[List[float]], column: int):
-    data_num = len(data)
-    data_entropy = calculate_entropy(data)
-    column_sorted = sorted(set([item[column] for item in data]))
-    split_points_entropy = [
-        (len(retain_column_less_value(data, column, split_point)) / data_num) * calculate_entropy(
-            retain_column_less_value(data, column, split_point))
-        for split_point in column_sorted[1:]
-    ]
-    if len(split_points_entropy) == 0:
-        return 0.0, None
-    min_split_point_entropy, min_split_point_index = min(
-            [(split_points_entropy[i], i) for i in range(len(split_points_entropy))])
-    return data_entropy - min_split_point_entropy, (
-            column_sorted[min_split_point_index] + column_sorted[min_split_point_index - 1]) / 2
-
-
-def gain_discrete(data: List[List[float]], column: int) -> float:
-    data_num = len(data)
-    target_count = Counter([item[column] for item in data])
-    return calculate_entropy(data) - sum([
-        (target_count[key] / data_num) * calculate_entropy(retain_column_with_value(data, column, key))
-        for key in target_count
+# 最后1列为结果，计算熵
+def calculate_entropy(column: pd.Series) -> float:
+    return sum([
+        -(count / len(column)) * log2(count / len(column))
+        for count in Counter(column).values()
     ])
 
 
-def make_tree(data: List[List[float]], columns: List[int], last_column, depth):
-    if depth > 16:
-        return 'out of length'
-    if len(data) == 0:
-        return None
-    if len(Counter([item[-1] for item in data])) == 1:
-        return data[0][-1]
-    use_columns = columns.copy()
-    if last_column in columns:
-        use_columns.remove(last_column)
-    (max_gain, max_label), max_index = max([(gain_continuous(data, i), i) for i in use_columns])
-    max_label = round(max_label, 2)
-    root = {f'{max_index}<{max_label}': {}, f'{max_index}>{max_label}': {}}
-    if abs(max_gain) < 1e-6:
-        return data[0][-1]
+# 条件熵
+
+
+def gain_continuous(data: pd.DataFrame, column: int) -> tuple[float, float]:
+    """
+    计算连续值的信息增益
+    :param data:数据集
+    :param column:列
+    :return: (信息增益，分割点)
+    """
+    # 去重，排序
+    # 假设是5,6,7,8，那么分割点是<5.5,<6.5,<7.5，如果我使用<6,<7,<8是等价的
+    # 1,2,3,4 可以被划分为
+    # 1 | 2,3,4 分割点：<2
+    # 1,2 | 3,4 分割点：<3
+    # 1,2,3 | 4 分割点：<4
+    # 信息增益=熵-条件熵，熵是固定的，信息增益最大
+    entropy = calculate_entropy(data.iloc[:, -1])
+    return max([
+        (
+            entropy
+            -
+            len(data[data[column] < chosen_spilt]) / len(data) * calculate_entropy(
+                data[data[column] < chosen_spilt].iloc[:, -1]
+            )
+            -
+            len(data[data[column] >= chosen_spilt]) / len(data) * calculate_entropy(
+                data[data[column] >= chosen_spilt].iloc[:, -1]
+            ),
+            chosen_spilt
+        )
+        for chosen_spilt in data[column].drop_duplicates().sort_values()[1:]
+    ])
+
+
+def make_tree(data: pd.DataFrame, depth: int) -> dict | float:
+    if data.iloc[:, -1].nunique() == 1:
+        return data.iloc[0, -1]
+    if depth > 5:
+        return Counter(data.iloc[:, -1]).most_common(1)[0][0]
+    if data.shape[0] < 5:
+        return Counter(data.iloc[:, -1]).most_common(1)[0][0]
+
+    ((max_gain, spilt), column) = max([
+        (
+            gain_continuous(data, column),
+            column
+        )
+        for column in filter(
+            lambda col:
+            col != data.columns[-1]
+            and
+            data[col].nunique() > 1,
+            data.columns
+        )
+    ])
+    if max_gain == 1:
+        return Counter(data.iloc[:, -1]).most_common(1)[0][0]
     else:
-        root[f'{max_index}<{max_label}'] = make_tree(retain_column_less_value(data, max_index, max_label), columns,
-                                                     max_index, depth + 1)
-        root[f'{max_index}>{max_label}'] = make_tree(retain_column_greater_value(data, max_index, max_label), columns,
-                                                     max_index, depth + 1)
-    return root
+        return {f"{column}小于{spilt}": make_tree(data[data[column] < spilt], depth + 1),
+                f"{column}大于等于{spilt}": make_tree(data[data[column] >= spilt], depth + 1)}
