@@ -1,6 +1,6 @@
 from train import make_tree
 from config import train_data, test_data
-from util import calc_accuracy, post_pruning, dict_to_mermaid
+from util import calc_accuracy, post_pruning
 from sklearn.model_selection import KFold
 
 if __name__ == '__main__':
@@ -13,9 +13,8 @@ if __name__ == '__main__':
         accuracy = calc_accuracy(tree, train_data.iloc[test_index, :])
         average += accuracy
         print(f'Fold{i + 1}:', accuracy)
-    print('average:', average / n_splits)
+    print('平均:', average / n_splits)
+    print()
     tree = post_pruning(make_tree(train_data, 0))
     print(tree)
-    print('test', calc_accuracy(tree, test_data))
-    print(dict_to_mermaid(tree))
-
+    print('测试集', calc_accuracy(tree, test_data))

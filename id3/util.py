@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 
 
@@ -50,26 +48,7 @@ def predict(tree: dict, data: pd.Series):
     else:
         return tree
 
-def change_symbol(param):
-    return param.replace('<', '小于').replace('>=', '大于等于')
 
-
-def dict_to_mermaid(input_dict):
-    result = ''
-    for key, value in input_dict.items():
-        if not isinstance(value, dict):
-            parent_node = key
-    for key, value in input_dict.items():
-        if isinstance(value, dict):
-            son_node = None
-            for _key, _value in value.items():
-                if isinstance(_value, dict):
-                    son_node = _key
-            result += f"{parent_node}-->|否| {son_node}\n"
-            result += dict_to_mermaid(value)
-        else:
-            result += f"{key}-->|是| {value}\n"
-    return result
 
 
 
