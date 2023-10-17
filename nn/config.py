@@ -13,10 +13,11 @@ test_y = test_x.pop('class')
 test_x = normalize(test_x, method='z_score').values
 test_y = one_hot_encode(test_y).values
 learning_rate = 0.001  # 学习率
-epochs = 1000  # 最大迭代次数
+epochs = 10000  # 最大迭代次数
 input_size = 4
 hidden_size = 10
 output_size = 3
 seed = 114
+runs = 10
 activation = sigmoid
 activation_derivative = sigmoid_derivative

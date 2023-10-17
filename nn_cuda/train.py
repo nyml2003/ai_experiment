@@ -1,4 +1,4 @@
-import cupy as np
+import numpy as np
 import config
 
 
@@ -20,6 +20,7 @@ class NeuralNetwork:
         np.random.seed(seed)
         self.inputs = inputs
         self.outputs = outputs
+        self.data_size = len(inputs)
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
@@ -28,9 +29,7 @@ class NeuralNetwork:
         self.learning_rate = learning_rate
 
     def forward(self):
-        hidden_output = self.hidden_layer.forward(self.inputs)
-        output = self.output_layer.forward(hidden_output)
-        return output
+        return self.output_layer.forward(self.hidden_layer.forward(self.inputs))
 
     def backward(self, output):
         output_error = output - self.outputs
@@ -43,12 +42,23 @@ class NeuralNetwork:
         self.hidden_layer.bias -= self.learning_rate * np.sum(hidden_delta, axis=0, keepdims=True)
 
     def loss(self):
-        return np.sum((self.outputs - self.forward()) ** 2) / len(self.outputs)
+        return np.sum(
+            np.power(self.outputs - self.forward(), 2)
+        ) / len(self.outputs)
 
     def train(self, epochs):
+        loss_arr = []
         for epoch in range(epochs):
             output = self.forward()
             self.backward(output)
+            if epoch % 10 == 0:
+                loss = self.loss()
+                loss_arr.append({
+                    'epoch': epoch,
+                    'loss': loss
+                })
+                print(f'epoch: {epoch}, loss: {self.loss()}')
+        return loss_arr
 
     def predict(self, inputs):
         hidden_output = self.hidden_layer.forward(inputs)
