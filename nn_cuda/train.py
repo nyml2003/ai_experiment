@@ -1,4 +1,4 @@
-import numpy as np
+import cupy as np
 import config
 
 
@@ -46,18 +46,9 @@ class NeuralNetwork:
         return np.sum((self.outputs - self.forward()) ** 2) / len(self.outputs)
 
     def train(self, epochs):
-        loss_arr = []
         for epoch in range(epochs):
             output = self.forward()
             self.backward(output)
-            if epoch % 10 == 0:
-                loss = self.loss()
-                loss_arr.append({
-                    'epoch': epoch,
-                    'loss': loss
-                })
-                print(f'epoch: {epoch}, loss: {self.loss()}')
-        return loss_arr
 
     def predict(self, inputs):
         hidden_output = self.hidden_layer.forward(inputs)

@@ -1,6 +1,6 @@
 import config
 from train import NeuralNetwork
-import matplotlib.pyplot as plt
+
 if __name__ == '__main__':
     nn = NeuralNetwork(
         config.train_x,
@@ -11,10 +11,6 @@ if __name__ == '__main__':
         config.seed,
         config.learning_rate
     )
-    loss_arr=nn.train(config.epochs)
-    print(loss_arr)
-    plt.plot([i['epoch'] for i in loss_arr], [i['loss'] for i in loss_arr])
-    plt.show()
-
+    nn.train(config.epochs)
     res = nn.evaluate(config.test_x, config.test_y)
-    print(f'accuracy: {res}')
+    print('Accuracy: {:.2f}%'.format(res * 100))
