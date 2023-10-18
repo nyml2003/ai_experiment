@@ -17,17 +17,6 @@ def read_data(file_path: str) -> pd.DataFrame:
     )
 
 
-# def normalize(data: np.ndarray, method: str) -> np.ndarray:
-#     def wrapper(data: np.ndarray) -> np.ndarray:
-#         return normalize(data, method)
-#     match method:
-#         case 'min_max':
-#             return (data - np.min(data)) / (np.max(data) - np.min(data))
-#         case 'z_score':
-#             return (data - np.mean(data, axis=0)) / np.std(data, axis=0)
-#         case _:
-#             raise ValueError('type must be min_max or z_score')
-
 def normalize(method: str, _data: np.ndarray = None) -> np.ndarray:
     def wrapper(data: np.ndarray) -> np.ndarray:
         match method:

@@ -31,23 +31,14 @@ if __name__ == '__main__':
         less = None
         last_loss = None
         learning_rate = config.learning_rate
+        epoch = 0
         for epoch in trange(config.epochs):
             nn.train(learning_rate)
-            if epoch > 0 and epoch % 100 == 0:
-                loss = nn.loss()
-                if last_loss is not None:
-                    if loss > last_loss:
-                        learning_rate *= 0.5
-                    elif abs(loss - last_loss) < 1e-6:
-                        break
-                    elif last_loss - loss > config.loss_threshold:
-                        learning_rate = learning_rate * 1.05
-                last_loss = loss
             if epoch > config.epochs / 2 and nn.loss() < config.loss_threshold:
                 break
         print(f'训练完成,迭代次数: {epoch + 1 }, 损失: {nn.loss()}')
-        accuracy_train = nn.evaluate(config.train_x, config.train_y)
-        accuracy_test = nn.evaluate(config.test_x, config.test_y)
+        accuracy_train = nn.evaluate(train_x, train_y)
+        accuracy_test = nn.evaluate(test_x, test_y)
         print(f'训练准确率: {accuracy_train}')
         print(f'测试准确率: {accuracy_test}')
         res_arr.append(accuracy_test)
