@@ -1,17 +1,34 @@
 import numpy as np
 import config
+import util
 
 
 class Neuron:
-    activation = np.vectorize(config.activation)
-    activation_derivative = np.vectorize(config.activation_derivative)
 
-    def __init__(self, from_size, to_size):
-        self.weights = np.random.randn(from_size, to_size)
-        self.bias = np.zeros((1, to_size))
+    def __init__(self, from_size: int, to_size: int, init_weight=0.01):
+        """
+        初始化权重和偏置
+        :param from_size:
+        :param to_size:
+
+        两种情况： input-->hidden  hidden-->output
+
+        """
+        self.weights = np.random.rand(to_size, from_size) * 2 - 1
+
+    @staticmethod
+    def activation(x: np.ndarray) -> np.ndarray:
+        return config.activation(x)
+
+    @staticmethod
+    def activation_derivative(x: np.ndarray) -> np.ndarray:
+        return config.activation_derivative(x)
 
     def forward(self, inputs: np.ndarray) -> np.ndarray:
-        return self.activation(np.dot(inputs, self.weights) + self.bias)
+        return self.activation(np.dot(self.weights, inputs))
+
+    def backward(self, diff: np.ndarray, output: np.ndarray) -> np.ndarray:
+        return np.multiply(diff, self.activation_derivative(output))
 
 
 class NeuralNetwork:
@@ -20,7 +37,7 @@ class NeuralNetwork:
         np.random.seed(seed)
         self.inputs = inputs
         self.outputs = outputs
-        self.data_size = len(inputs)
+        self.data_size = inputs.shape[1]
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
@@ -28,29 +45,23 @@ class NeuralNetwork:
         self.output_layer = Neuron(hidden_size, output_size)
         self.learning_rate = learning_rate
 
-    def forward(self):
-        return self.output_layer.forward(self.hidden_layer.forward(self.inputs))
-
-    def backward(self, output):
-        output_error = output - self.outputs
-        output_delta = output_error * self.output_layer.activation_derivative(output)
-        hidden_error = np.dot(output_delta, self.output_layer.weights.T)
-        hidden_delta = hidden_error * self.hidden_layer.activation_derivative(self.hidden_layer.forward(self.inputs))
-        self.output_layer.weights -= self.learning_rate * np.dot(self.hidden_layer.forward(self.inputs).T, output_delta)
-        self.output_layer.bias -= self.learning_rate * np.sum(output_delta, axis=0, keepdims=True)
-        self.hidden_layer.weights -= self.learning_rate * np.dot(self.inputs.T, hidden_delta)
-        self.hidden_layer.bias -= self.learning_rate * np.sum(hidden_delta, axis=0, keepdims=True)
-
     def loss(self):
-        return np.sum(
-            np.power(self.outputs - self.forward(), 2)
-        ) / len(self.outputs)
+        hidden_output = self.hidden_layer.forward(self.inputs)
+        output_output = self.output_layer.forward(hidden_output)
+        return np.sum(np.square(self.outputs - output_output)) / self.data_size
 
     def train(self, epochs):
         loss_arr = []
         for epoch in range(epochs):
-            output = self.forward()
-            self.backward(output)
+            # forward
+            hidden_output = self.hidden_layer.forward(self.inputs)
+            output_output = self.output_layer.forward(hidden_output)
+            # backward
+            output_delta = self.output_layer.backward(output_output - self.outputs, output_output)
+            hidden_delta = self.hidden_layer.backward(self.output_layer.weights.T @ output_delta, hidden_output)
+            # update
+            self.output_layer.weights -= self.learning_rate * (output_delta @ hidden_output.T)
+            self.hidden_layer.weights -= self.learning_rate * (hidden_delta @ self.inputs.T)
             if epoch % 1000 == 0:
                 loss = self.loss()
                 loss_arr.append({
@@ -58,14 +69,14 @@ class NeuralNetwork:
                     'loss': loss
                 })
                 print(f'epoch: {epoch}, loss: {self.loss()}')
+                if loss < 0.01:
+                    break
         return loss_arr
 
     def predict(self, inputs):
         hidden_output = self.hidden_layer.forward(inputs)
-        return self.output_layer.forward(hidden_output)
+        output_output = self.output_layer.forward(hidden_output)
+        return output_output
 
     def evaluate(self, inputs, outputs):
-        predict_outputs = self.predict(inputs)
-        predict_outputs = np.argmax(predict_outputs, axis=1)
-        outputs = np.argmax(outputs, axis=1)
-        return np.sum(predict_outputs == outputs) / len(outputs)
+        return np.sum(np.argmax(self.predict(inputs), axis=0) == np.argmax(outputs, axis=0)) / self.data_size

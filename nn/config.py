@@ -1,23 +1,35 @@
 import os
-from util import read_data, normalize, one_hot_encode, sigmoid_derivative, sigmoid
+import pandas as pd
+import numpy as np
 
-data_path = 'data'
-train_data_filename = 'Iris-train.txt'
-train_x = read_data(os.path.join(data_path, train_data_filename))
-train_y = train_x.pop('class')
-train_x = normalize(train_x, method='z_score').values
-train_y = one_hot_encode(train_y).values
-test_data_filename = 'Iris-test.txt'
-test_x = read_data(os.path.join(data_path, test_data_filename))
-test_y = test_x.pop('class')
-test_x = normalize(test_x, method='z_score').values
-test_y = one_hot_encode(test_y).values
-learning_rate = 0.001  # 学习率
+import util
+
+# 参数配置
+learning_rate = 0.01  # 学习率
 epochs = 10000  # 最大迭代次数
 input_size = 4
 hidden_size = 10
 output_size = 3
 seed = 114
 runs = 10
-activation = sigmoid
-activation_derivative = sigmoid_derivative
+activation = util.sigmoid
+activation_derivative = util.sigmoid_derivative
+normalize = util.normalize('min_max')
+
+# 数据预处理
+data_path = 'data'
+
+
+def read_data_config():
+    for filename in ['Iris-train.txt', 'Iris-test.txt']:
+        data: pd.DataFrame = util.read_data(os.path.join(data_path, filename))
+        x: np.ndarray = util.normalize('min_max', data.iloc[:, :-1].values).T
+        y: np.ndarray = util.one_hot_encode(data.iloc[:, -1].values, output_size).T
+        yield x, y
+
+
+train_x, train_y = next(read_data_config())
+train_x = np.insert(train_x, 0, -1, axis=0)
+test_x, test_y = next(read_data_config())
+test_x = np.insert(test_x, 0, -1, axis=0)
+input_size += 1
