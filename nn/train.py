@@ -34,7 +34,7 @@ class Neuron:
 
 class NeuralNetwork:
 
-    def __init__(self, inputs, outputs, input_size, hidden_size, output_size, learning_rate, init_weight):
+    def __init__(self, inputs, outputs, input_size, hidden_size, output_size, init_weight):
         self.inputs = inputs
         self.outputs = outputs
         # 数据集大小
@@ -42,7 +42,6 @@ class NeuralNetwork:
         self.input_size = input_size
         self.hidden_layer = Neuron(input_size, hidden_size, init_weight)
         self.output_layer = Neuron(hidden_size, output_size, init_weight)
-        self.learning_rate = learning_rate
 
     def loss(self):
         _, output_output = self.forward(self.inputs)
@@ -64,14 +63,14 @@ class NeuralNetwork:
         )
         return output_delta, hidden_delta
 
-    def update(self, output_delta, hidden_delta):
-        self.output_layer.weights -= self.learning_rate * np.dot(output_delta, self.hidden_layer.forward(self.inputs).T)
-        self.hidden_layer.weights -= self.learning_rate * np.dot(hidden_delta, self.inputs.T)
+    def update(self, output_delta, hidden_delta, learning_rate):
+        self.output_layer.weights -= learning_rate * np.dot(output_delta, self.hidden_layer.forward(self.inputs).T)
+        self.hidden_layer.weights -= learning_rate * np.dot(hidden_delta, self.inputs.T)
 
-    def train(self):
+    def train(self, learning_rate):
         hidden_output, output_output = self.forward(self.inputs)
         output_delta, hidden_delta = self.backward(hidden_output, output_output)
-        self.update(output_delta, hidden_delta)
+        self.update(output_delta, hidden_delta, learning_rate)
 
     def predict(self, inputs):
         _, output_output = self.forward(inputs)

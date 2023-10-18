@@ -10,12 +10,12 @@ epochs = 10000  # 最大迭代次数
 input_size = 4  # 输入层神经元个数
 hidden_size = 10  # 隐藏层神经元个数
 output_size = 3  # 输出层神经元个数
-runs = 10  # 运行次数
+runs = 100  # 运行次数
 activation = util.sigmoid
 activation_derivative = util.sigmoid_derivative
 normalize = util.normalize('min_max')
 init_weight = 0.01  # 权重初始化范围 [-init_weight, init_weight]
-
+loss_threshold = 0.07  # 损失阈值
 # 生成随机种子
 seed = int(time.time())
 np.random.seed(seed)

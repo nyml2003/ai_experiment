@@ -25,15 +25,27 @@ if __name__ == '__main__':
             input_size=config.input_size,
             hidden_size=config.hidden_size,
             output_size=config.output_size,
-            learning_rate=config.learning_rate,
             init_weight=config.init_weight
         )
         print(f'开始训练,最大迭代次数: {config.epochs}')
+        less = None
+        last_loss = None
+        learning_rate = config.learning_rate
         for epoch in trange(config.epochs):
-            nn.train()
-            if epoch > config.epochs / 2 and nn.loss() < 0.05:
+            nn.train(learning_rate)
+            if epoch > 0 and epoch % 100 == 0:
+                loss = nn.loss()
+                if last_loss is not None:
+                    if loss > last_loss:
+                        learning_rate *= 0.5
+                    elif abs(loss - last_loss) < 1e-6:
+                        break
+                    elif last_loss - loss > config.loss_threshold:
+                        learning_rate = learning_rate * 1.05
+                last_loss = loss
+            if epoch > config.epochs / 2 and nn.loss() < config.loss_threshold:
                 break
-        print(f'训练完成,迭代次数: {epoch + 1},损失: {nn.loss()}')
+        print(f'训练完成,迭代次数: {epoch + 1 }, 损失: {nn.loss()}')
         accuracy_train = nn.evaluate(config.train_x, config.train_y)
         accuracy_test = nn.evaluate(config.test_x, config.test_y)
         print(f'训练准确率: {accuracy_train}')
