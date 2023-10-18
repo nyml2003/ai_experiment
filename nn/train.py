@@ -1,6 +1,5 @@
 import numpy as np
 import config
-import util
 
 
 class Neuron:
@@ -14,7 +13,9 @@ class Neuron:
         两种情况： input-->hidden  hidden-->output
 
         """
-        self.weights = np.random.rand(to_size, from_size) * 2 - 1
+        # self.weights = np.random.rand(to_size, from_size) * 2 - 1
+        # 用np
+        self.weights = np.random.randn(to_size, from_size) * init_weight
 
     @staticmethod
     def activation(x: np.ndarray) -> np.ndarray:
@@ -62,7 +63,7 @@ class NeuralNetwork:
             # update
             self.output_layer.weights -= self.learning_rate * (output_delta @ hidden_output.T)
             self.hidden_layer.weights -= self.learning_rate * (hidden_delta @ self.inputs.T)
-            if epoch % 1000 == 0:
+            if epoch % 5000 == 0:
                 loss = self.loss()
                 loss_arr.append({
                     'epoch': epoch,
