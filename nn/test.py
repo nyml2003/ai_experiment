@@ -21,7 +21,7 @@ if __name__ == '__main__':
         print(f'开始训练,最大迭代次数: {config.epochs}')
         for epoch in range(config.epochs):
             nn.train(config.learning_rate)
-        print(f'训练完成,迭代次数: {epoch + 1}, 损失: {nn.loss()}')
+        print(f'训练完成,迭代次数: {epoch + 1}, 损失: {nn.losses()}')
         accuracy_train = nn.evaluate(config.train_x, config.train_y)
         accuracy_test = nn.evaluate(config.test_x, config.test_y)
         print(f'训练准确率: {accuracy_train}')

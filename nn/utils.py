@@ -1,11 +1,19 @@
 import numpy as np
-import pandas as pd
-
-
-
 
 
 def normalize(method: str, data: np.ndarray):
+    """
+    归一化
+    :param method: 选择归一化方式
+    :param data: 数据集
+    :return:
+
+    ppt中介绍的两种归一化方式：
+    - min_max
+    用每一维度 j 的最小值 min_j和最大值 max_j进行规范化
+    - z_score
+    用每一维度 j 的均值 mean_j和标准差 std_j进行规范化
+    """
     match method:
         case 'min_max':
             data_min = np.min(data, axis=0)
@@ -47,5 +55,15 @@ def sigmoid_derivative(fx: np.ndarray) -> np.ndarray:
     return np.multiply(fx, 1 - fx)
 
 
-def one_hot_encode(data_output: np.ndarray, output_size) -> np.ndarray:
-    return np.eye(output_size)[data_output]
+def one_hot_encode(y: np.ndarray, output_size) -> np.ndarray:
+    """
+    one-hot编码
+    :param y: 输出层的真实值
+    :param output_size: 输出层神经元个数
+    :return: one-hot编码后的矩阵
+
+    np.eye()生成对角矩阵
+
+    y是1维数组，每个元素是一个类别的索引
+    """
+    return np.eye(output_size)[y]
